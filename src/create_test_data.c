@@ -4,9 +4,9 @@
 #include <string.h>
 #include <time.h>
 
-void store_array (FILE* fp, float a[], int dim);
-void create_data (float data[], int dim);
-void create_label (float label[], int l_size, float data[], int d_size);
+void store_array (FILE* fp, double a[], int dim);
+void create_data (double data[], int dim);
+void create_label (double label[], int l_size, double data[], int d_size);
 
 
 int main ()
@@ -18,8 +18,8 @@ int main ()
 
    char name[32];
 
-   float data[data_size];
-   float label[label_size];
+   double data[data_size];
+   double label[label_size];
 
 
 
@@ -42,7 +42,7 @@ int main ()
    return EXIT_SUCCESS;
 }
 
-void store_array (FILE* fp, float a[], int dim)
+void store_array (FILE* fp, double a[], int dim)
 {
    int i;
    for (i = 0; i < dim; i++)
@@ -52,18 +52,18 @@ void store_array (FILE* fp, float a[], int dim)
    return;
 }
 
-void create_data (float data[], int dim)
+void create_data (double data[], int dim)
 {
    int i;
    srand(clock());
    for (i = 0; i < dim; i++)
    {
-      data[i] = rand()/(float)RAND_MAX;
+      data[i] = rand()/(double)RAND_MAX;
    }
    return;
 }
 
-void create_label (float label[], int l_size, float data[], int d_size)
+void create_label (double label[], int l_size, double data[], int d_size)
 {
    int i;
    int f;

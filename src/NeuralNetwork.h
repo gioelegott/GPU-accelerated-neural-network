@@ -66,11 +66,11 @@ void randomize_network (neural_network *n);
 void zero_neural_network (neural_network* n);
 
 /*training functions*/
-void train (neural_network* n, training_data data, int epochs, float learning_rate, float momentum, training_data test, int testing_interval);
-void training_session (neural_network* n, training_data data, float learning_rate, float momentum);
-neural_network stochastic_gradient_descent (neural_network* n, labeled_data* batch, int batch_size, float learning_rate, neural_network prec, float momentum);
+void train (neural_network* n, training_data data, int epochs, double learning_rate, double momentum, training_data test, int testing_interval);
+void training_session (neural_network* n, training_data data, double learning_rate, double momentum);
+neural_network stochastic_gradient_descent (neural_network* n, labeled_data* batch, int batch_size, double learning_rate, neural_network prec, double momentum);
 neural_network create_neural_network_copy (neural_network n);
-void scalar_neural_network_product (neural_network* n, float s);
+void scalar_neural_network_product (neural_network* n, double s);
 void neural_network_subtraction (neural_network sour, neural_network* dest);
 void total_gradient (neural_network n, neural_network* temp, labeled_data* batch, int batch_size);
 void backpropagation (layer* temp, layer* l, vector diff);
@@ -95,7 +95,7 @@ void extract_bitmap_from_mnist (FILE* fp, BITMAP img);
 vector read_vector_from_mnist (FILE* fp, int n);
 void extract_vector_from_mnist (FILE* fp, vector* img);
 
-float test_performances (neural_network n, training_data d);
+double test_performances (neural_network n, training_data d);
 
 /*load and store functions*/
 void load_neural_network (FILE* fp, neural_network* n);
@@ -107,12 +107,12 @@ layer* load_layer_bin (FILE* fp);
 
 
 /*activation functions*/
-float sigmoid (float x);
-float sigmoid_derivative (float x);
-float relu (float x);
-float relu_derivative (float x);
-float tan_h (float x);
-float tanh_derivative (float x);
+double sigmoid (double x);
+double sigmoid_derivative (double x);
+double relu (double x);
+double relu_derivative (double x);
+double tan_h (double x);
+double tanh_derivative (double x);
 void softmax (vector* v);
 void softmax_derivative (vector *v);
 

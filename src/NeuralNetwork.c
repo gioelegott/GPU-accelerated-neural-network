@@ -207,14 +207,14 @@ void randomize_network (neural_network *n)
 
 /*********  TRAINING FUNCTIONS  ************/
 
-void train (neural_network* n, training_data data, int epochs, float learning_rate, float momentum, training_data test, int testing_interval)
+void train (neural_network* n, training_data data, int epochs, double learning_rate, double momentum, training_data test, int testing_interval)
 {
    /*trains n by learning from the training data wich is elaborated epochs times*/
 
    int i, j, k;
    int num_files;
    num_files = data.n_batches * data.batch_size;
-   float dev;
+   double dev;
 
 
    /*randomizig data order and grouping and training n for each epoch */
@@ -234,7 +234,7 @@ void train (neural_network* n, training_data data, int epochs, float learning_ra
       double time_spent = (double)(end - begin)/CLOCKS_PER_SEC;
 
       int minutes = (int)time_spent/60;
-      float seconds = (float)time_spent - (minutes*60);
+      double seconds = (double)time_spent - (minutes*60);
       fprintf(stderr, "%d' %g\"\n", minutes, seconds);
 
       if (i%testing_interval == 0)
@@ -251,7 +251,7 @@ void train (neural_network* n, training_data data, int epochs, float learning_ra
 
 }
 
-void training_session (neural_network* n, training_data data, float learning_rate, float momentum)
+void training_session (neural_network* n, training_data data, double learning_rate, double momentum)
 {
    /*changes n weights and biases according to the data set with a velocity coeff*/
 
@@ -277,7 +277,7 @@ void training_session (neural_network* n, training_data data, float learning_rat
    return;
 }
 
-neural_network stochastic_gradient_descent (neural_network* n, labeled_data* batch, int batch_size, float learning_rate, neural_network prec, float momentum)
+neural_network stochastic_gradient_descent (neural_network* n, labeled_data* batch, int batch_size, double learning_rate, neural_network prec, double momentum)
 {
    /*optimizes the cost/loss function accordingly to the current batch of data with a velocity coeff*/
 
@@ -290,7 +290,7 @@ neural_network stochastic_gradient_descent (neural_network* n, labeled_data* bat
 
 
    /*averaging the results of backropagtion by dividing it for the batch size and then multipling by the coefficient*/
-   scalar_neural_network_product (&temp, (float)1.0/(float)batch_size * learning_rate);
+   scalar_neural_network_product (&temp, (double)1.0/(double)batch_size * learning_rate);
 
    if (momentum != 0.0)
    {
@@ -322,7 +322,7 @@ neural_network create_neural_network_copy (neural_network n)
    return temp;
 }
 
-void scalar_neural_network_product (neural_network* n, float s)
+void scalar_neural_network_product (neural_network* n, double s)
 {
 
    layer* l = n->input;
@@ -502,7 +502,7 @@ void activation_sample_gradient (vector* g, vector bias_g, matrix weights)
 
    /*multiplying vector baias_g (orizontal) by matrix weights*/
    int i, j;
-   float p_sum;
+   double p_sum;
 
    for (j = 0; j < weights.columns; j++)
    {
@@ -704,8 +704,8 @@ void extract_labeled_data_from_mnist (labeled_data* d, FILE* data_file, FILE* la
       {
          fread (&pixel, sizeof(pixel), 1, data_file);
 
-         d->data.entry[i*columns + j] = ((float)(BLACK - pixel))/(float)BLACK;
-         /*d->data.entry[i*rows + j] = ((float)(BLACK - pixel))/(float)BLACK;*/
+         d->data.entry[i*columns + j] = ((double)(BLACK - pixel))/(double)BLACK;
+         /*d->data.entry[i*rows + j] = ((double)(BLACK - pixel))/(double)BLACK;*/
 
       }
    }
@@ -804,7 +804,7 @@ void extract_vector_from_mnist (FILE* fp, vector* img)
    for (i = 0; i < img->lenght; i++)
    {
       fread (&pixel, sizeof(pixel), 1, fp);
-      img->entry[i] = ((float)(BLACK - pixel))/(float)BLACK;
+      img->entry[i] = ((double)(BLACK - pixel))/(double)BLACK;
       
    }
 
@@ -813,10 +813,10 @@ void extract_vector_from_mnist (FILE* fp, vector* img)
 
 /*********  PERFORMANCE FUNCTIONS  ************/
 
-float test_performances (neural_network n, training_data d)
+double test_performances (neural_network n, training_data d)
 {
-   float result = 0;
-   float r = 0;
+   double result = 0;
+   double r = 0;
    int i, j;
    vector pred;
 
@@ -962,20 +962,20 @@ layer* load_layer_bin (FILE* fp)
 
 /*ACTIVATION FUNCTIONS*/
 
-float sigmoid (float x)
+double sigmoid (double x)
 {
-   float n;
-   n = (float)exp((double) -x);
+   double n;
+   n = (double)exp((double) -x);
    return 1.0/(1 + n);
 }
 
-float sigmoid_derivative (float x)
+double sigmoid_derivative (double x)
 {
-   float n = sigmoid (x);
-   return (float)exp((double) -x)*(n*n);
+   double n = sigmoid (x);
+   return (double)exp((double) -x)*(n*n);
 }
 
-float relu (float x)
+double relu (double x)
 {
    if (x < 0)
       return 0.0;
@@ -983,7 +983,7 @@ float relu (float x)
       return x;   
 }
 
-float relu_derivative (float x)
+double relu_derivative (double x)
 {
    if (x < 0)
       return 0.0;
@@ -991,20 +991,20 @@ float relu_derivative (float x)
       return 1.0;  
 }
 
-float tan_h (float x)
+double tan_h (double x)
 {
-   return (float)tanh(x);
+   return (double)tanh(x);
 }
 
-float tanh_derivative (float x)
+double tanh_derivative (double x)
 {
-   float n = tanh(x);
+   double n = tanh(x);
    return 1 - n*n;
 }
 
 void softmax (vector* v)
 {
-   float div = 0.0;
+   double div = 0.0;
    int i;
 
    for (i = 0; i < v->lenght; i++)
@@ -1021,8 +1021,8 @@ void softmax (vector* v)
 
 void softmax_derivative (vector *v)
 {
-   float x = 0;
-   float p = 0;
+   double x = 0;
+   double p = 0;
    int i, j;
 
    for (i = 0; i < v->lenght; i++)

@@ -17,12 +17,12 @@ matrix create_matrix (int r, int c)
    m.columns = c;
 
    /*allocating a vector of pointers*/
-   m.entry = (float**)malloc(sizeof(float*)*r);
+   m.entry = (double**)malloc(sizeof(double*)*r);
 
-   /*allocating a vector of floats for each pointer/row*/
+   /*allocating a vector of doubles for each pointer/row*/
    for (i = 0; i < r; i++)                          
    {
-      m.entry[i] = (float*)malloc(sizeof(float)*c);     
+      m.entry[i] = (double*)malloc(sizeof(double)*c);     
    }
 
    return m;
@@ -33,7 +33,7 @@ void delete_matrix (matrix *m)
    /*deallocates the memory used to store m*/
    int i;
 
-   /*deallocating all float vectors*/
+   /*deallocating all double vectors*/
    for (i = 0; i < m->rows; i++)                
    {
       free(m->entry[i]);                                     
@@ -116,7 +116,7 @@ void store_matrix_bin (FILE* fp, matrix m)
    fwrite(&(m.columns), sizeof(int), 1, fp);
    for (i = 0; i < m.rows; i++)
    {
-      fwrite(m.entry[i], sizeof(float), m.columns, fp);     
+      fwrite(m.entry[i], sizeof(double), m.columns, fp);     
    }
    return;
 
@@ -155,13 +155,13 @@ matrix load_matrix_bin (FILE* fp)
    matrix m = create_matrix(r, c);
    for (i = 0; i < m.rows; i++)
    {
-      fread(m.entry[i], sizeof(float), m.columns, fp);     
+      fread(m.entry[i], sizeof(double), m.columns, fp);     
    }
    return m;
 
 }
 
-void randomize_matrix (matrix* m, float lower, float higher)
+void randomize_matrix (matrix* m, double lower, double higher)
 {
    /*replaces all matrix m's entries with a random number in the interval [lower, higher]*/
    int i, j;
@@ -172,7 +172,7 @@ void randomize_matrix (matrix* m, float lower, float higher)
       for (j = 0; j < m->columns; j++)
       {
          /*randomization function*/
-         m->entry[i][j] = float_random_number(lower, higher);
+         m->entry[i][j] = double_random_number(lower, higher);
       }
    }
    return;
@@ -199,7 +199,7 @@ vector create_vector (int lenght)
 {
    /*creates a vector of lenght lenght*/
    vector v;
-   v.entry = (float*)malloc(sizeof(float)*lenght);
+   v.entry = (double*)malloc(sizeof(double)*lenght);
    v.lenght = lenght;
    return v;
 }
@@ -259,7 +259,7 @@ void store_vector_bin (FILE* fp, vector v)
 {
    /*stores the vector v in binary file*/
    fwrite(&(v.lenght), sizeof(int), 1, fp);
-   fwrite(v.entry, sizeof(float), v.lenght, fp);  
+   fwrite(v.entry, sizeof(double), v.lenght, fp);  
 
    return;
 
@@ -293,7 +293,7 @@ vector load_vector_bin (FILE* fp)
    int l;
    fread(&l, sizeof(int), 1, fp);
    vector v = create_vector(l);
-   fread(v.entry, sizeof(float), v.lenght, fp);  
+   fread(v.entry, sizeof(double), v.lenght, fp);  
    return v;
 
 }
@@ -331,7 +331,7 @@ vector create_copy_vector (vector sour)
    return dest;
 }
 
-void randomize_vector (vector* v, float lower, float higher)
+void randomize_vector (vector* v, double lower, double higher)
 {
    /*replaces all vector v's entries with a random number in the interval [lower, higher]*/
    srand((unsigned int)clock());
@@ -339,7 +339,7 @@ void randomize_vector (vector* v, float lower, float higher)
    int i;
    for (i = 0; i < v->lenght; i++)
    {
-      v->entry[i] = float_random_number(lower, higher);;
+      v->entry[i] = double_random_number(lower, higher);;
    }
    return;
 }
@@ -436,7 +436,7 @@ void matrix_subtraction (matrix sour, matrix* dest)
    return;
 }
 
-void vector_function (vector *v, float (*f)(float))
+void vector_function (vector *v, double (*f)(double))
 {
    /*v = f(v)*/
 
@@ -448,7 +448,7 @@ void vector_function (vector *v, float (*f)(float))
    return;
 }
 
-void matrix_function (matrix *m, float (*f)(float))
+void matrix_function (matrix *m, double (*f)(double))
 {
    /*m = f(m)*/
 
@@ -464,7 +464,7 @@ void matrix_function (matrix *m, float (*f)(float))
 
 }
 
-void scalar_vector_product (vector* r, float s)
+void scalar_vector_product (vector* r, double s)
 {
    /*r *= s*/
 
@@ -476,7 +476,7 @@ void scalar_vector_product (vector* r, float s)
    return;
 }
 
-void scalar_matrix_product (matrix* r, float s)
+void scalar_matrix_product (matrix* r, double s)
 {
    /*r *= s*/
 
@@ -491,7 +491,7 @@ void scalar_matrix_product (matrix* r, float s)
    return;
 }
 
-float vector_dot_product (vector v1, vector v2)
+double vector_dot_product (vector v1, vector v2)
 {
    /*returns dot product v1 * v2*/
 
@@ -502,7 +502,7 @@ float vector_dot_product (vector v1, vector v2)
    }
    
    int i;
-   float p_sum = 0;
+   double p_sum = 0;
 
    for (i = 0; i < v1.lenght; i++)
    {
@@ -523,7 +523,7 @@ void matrix_product (matrix m1, matrix m2, matrix* r)
    }
 
    int i, j, k;
-   float p_sum;
+   double p_sum;
 
    for (i = 0; i < m1.rows; i++)
    {
@@ -551,7 +551,7 @@ void matrix_vector_product (matrix m, vector v, vector* r)
    }
 
    int i, j;
-   float p_sum;
+   double p_sum;
 
    for (i = 0; i < m.rows; i++)
    {
@@ -576,7 +576,7 @@ void vector_matrix_product (vector v, matrix m, vector* r)
    }
 
    int i, j;
-   float p_sum;
+   double p_sum;
 
    for (j = 0; j < m.columns; j++)
    {
@@ -627,14 +627,14 @@ void vector_inverted_division (vector sour, vector* dest)
    return;
 }
 
-float float_random_number (float lower, float higher)
+double double_random_number (double lower, double higher)
 {
-   /*returns a random float number in the interval [lower, higher]*/
+   /*returns a random double number in the interval [lower, higher]*/
 
-   float r;
-   float span = higher - lower;
+   double r;
+   double span = higher - lower;
 
-   r = ((float)rand()/(float)RAND_MAX) * span;
+   r = ((double)rand()/(double)RAND_MAX) * span;
 
    return r + lower;   
 }
@@ -647,11 +647,11 @@ int int_random_number (int lower, int higher)
    return r;
 }
 
-float standard_deviation (vector v, vector w)
+double standard_deviation (vector v, vector w)
 {
    vector temp = create_copy_vector(v);
    int i;
-   float r = 0.0;
+   double r = 0.0;
 
    vector_subtraction(w, &temp);
    vector_function (&temp, square);
@@ -665,7 +665,7 @@ float standard_deviation (vector v, vector w)
 
 }
 
-float square (float n)
+double square (double n)
 {
    return n*n;
 }

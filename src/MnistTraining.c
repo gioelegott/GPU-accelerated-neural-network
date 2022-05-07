@@ -4,12 +4,12 @@ int main()
 {
 
    int v[3] = {DATA_SIZE, 80, 80}; //<---- vector that describes the neural network structure
-   float momentum = 0.0;
-   float learning_rate = 0.001; 
+   double momentum = 0.0;
+   double learning_rate = 0.001; 
    int epochs = 10;
 
 
-   float accuracy;
+   double accuracy;
    
    fprintf(stderr, "Creating neural network...");
    neural_network n = create_neural_network(3, v, SIGMOID);
