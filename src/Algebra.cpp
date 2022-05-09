@@ -29,6 +29,28 @@ Matrix::Matrix (int r, int c, double v) : rows(r), columns(c)
    }
 }
 
+Matrix::Matrix (FILE* fp)
+{
+   if (fwrite (&(this->rows), sizeof(int), 1, fp) == 0)
+   {
+      fprintf(stderr, "Error in loading matrix\n");
+      exit(1);
+   }
+
+   if (fwrite (&(this->columns), sizeof(int), 1, fp) == 0)
+   {
+      fprintf(stderr, "Error in loading matrix\n");
+      exit(1);
+   }
+
+   int dim = this->rows * this->columns;
+   if (fwrite(this->data, sizeof(double), dim, fp) != dim)
+   {
+      fprintf(stderr, "Error in loading matrix\n");
+      exit(1);
+   }
+}
+
 Matrix::~Matrix ()
 {
    free(data);
@@ -99,9 +121,85 @@ Matrix& Matrix::function (double (*f)(double))
    return *this;
 }
 
+Matrix& randomize();
 
-   ostream& operator<< (ostream& os, const Matrix& m);
-   friend istream& operator>> (istream& os, const Matrix& m);
+int Matrix::store (FILE* fp)
+{
+   /*Stores the matrix into a binary file.
+     Returns 1 if load was successful 0 if not*/
+
+   int r = this->rows;
+   int c = this->columns;
+
+   if (fwrite (&(this->rows), sizeof(int), 1, fp) == 0)
+   {
+      fprintf(stderr, "Error in loading matrix\n");
+      return 0;
+   }
+
+   if (fwrite (&(this->columns), sizeof(int), 1, fp) == 0)
+   {
+      fprintf(stderr, "Error in loading matrix\n");
+      return 0;
+   }
+
+   if (fwrite(this->data, sizeof(double), r * c, fp) != r * c)
+   {
+      fprintf(stderr, "Error in loading matrix\n");
+      return 0;
+   }
+
+   return 1;
+
+}
+
+
+int Matrix::load (FILE* fp)
+{
+   /*Loads the matrix into a binary file.
+     Returns 1 if load was successful 0 if not*/
+
+   int r, c;
+
+   if (fread (&r), sizeof(int), 1, fp) == 0)
+   {
+      fprintf(stderr, "Error in loading matrix\n");
+      return 0;
+   }
+
+   if (fread (&c, sizeof(int), 1, fp) == 0)
+   {
+      fprintf(stderr, "Error in loading matrix\n");
+      return 0;
+   }
+
+   if (r != this->rows || c != this->columns)
+   {
+      fprintf(stderr, "Matrix dimension does not correspond\n");
+      return 0;
+   }
+
+   if (fread(this->data, sizeof(double), r * c, fp) != r * c)
+   {
+      fprintf(stderr, "Error in loading matrix\n");
+      return 0;
+   }
+
+   return 1;
+}
+
+ostream& operator<< (ostream& os, const Matrix& m)
+{
+   int i, j;
+   for (i = 0, ptr = data; i < r; i++, ptr++)
+   {
+      for (j = 0; j < c; j++, ptr++)
+         os << *ptr << ' ';
+      os << endl;
+   }
+}
+
+
    friend Matrix operator+ (const Matrix& m1, const Matrix& m2);
    friend Matrix operator- (const Matrix& m1, const Matrix& m2);
    virtual friend Matrix operator* (const Matrix& m1, const Matrix& m2);
