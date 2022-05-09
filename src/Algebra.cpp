@@ -121,7 +121,16 @@ Matrix& Matrix::function (double (*f)(double))
    return *this;
 }
 
-Matrix& randomize();
+void randomize (unsigned seed, double h, double l)
+{
+   int i;
+   double* ptr;
+   double s = h - l;
+   srand(seed);
+   for (i = 0, ptr = data; i < r * c; i++, ptr++)
+      *ptr = ((double)rand()/(double)RAND_MAX) * span + l;
+
+}
 
 int Matrix::store (FILE* fp)
 {
@@ -200,682 +209,70 @@ ostream& operator<< (ostream& os, const Matrix& m)
 }
 
 
-   friend Matrix operator+ (const Matrix& m1, const Matrix& m2);
-   friend Matrix operator- (const Matrix& m1, const Matrix& m2);
-   virtual friend Matrix operator* (const Matrix& m1, const Matrix& m2);
-
-
-   public:
-   Matrix& randomize();
-
-
-
-
-
-
-/**************  BASIC MATRIX FUNCTIONS  *****************/
-/* CREATE, DELETE, PRINT, READ, LOAD, STORE, RANDOMIZE, ZERO */
-
-matrix create_matrix (int r, int c)
+Matrix operator+ (const Matrix& m1, const Matrix& m2)
 {
-   /*creates a matrix with r rows and c columns*/
-
-   matrix m;
-   int i;
-
-   m.rows = r;
-   m.columns = c;
-
-   /*allocating a vector of pointers*/
-   m.entry = (double**)malloc(sizeof(double*)*r);
-
-   /*allocating a vector of doubles for each pointer/row*/
-   for (i = 0; i < r; i++)                          
+   int r = m1.rows;
+   int c = m1.columns;
+   if (r != m2.rows || c != m2.columns)
    {
-      m.entry[i] = (double*)malloc(sizeof(double)*c);     
+      fprintf (stderr, "Sum is not possible between matreces with different dimensions\n");
+      exit (1);
    }
+
+   Matrix m(r, c);
+   int i;
+   double *ptr1, *ptr2, *ptr;
+   for (i = 0, ptr1 = m1.data, ptr2 = m2.data, ptr = m.data; i < r * c; i++, ptr1++, ptr2++, ptr++)
+      *ptr = *ptr1 + *ptr2;
 
    return m;
 }
 
-void delete_matrix (matrix *m)
+Matrix operator- (const Matrix& m1, const Matrix& m2)
 {
-   /*deallocates the memory used to store m*/
+   int r = m1.rows;
+   int c = m1.columns;
+   if (r != m2.rows || c != m2.columns)
+   {
+      fprintf (stderr, "Subtraction is not possible between matreces with different dimensions\n");
+      exit (1);
+   }
+
+   Matrix m(r, c);
    int i;
+   double *ptr1, *ptr2, *ptr;
+   for (i = 0, ptr1 = m1.data, ptr2 = m2.data, ptr = m.data; i < r * c; i++, ptr1++, ptr2++, ptr++)
+      *ptr = *ptr1 - *ptr2;
 
-   /*deallocating all double vectors*/
-   for (i = 0; i < m->rows; i++)                
-   {
-      free(m->entry[i]);                                     
-   }
-
-   /*deallocating the pointer vector*/
-   free(m->entry);
-   
-   m->rows = 0;
-   m->columns = 0;
-
-   return;
+   return m; 
 }
 
-void print_matrix (matrix m)
+Matrix operator* (const Matrix& m1, const Matrix& m2)
 {
-   /*prints on terminal the matrix m*/
-   int i, j;
-   
-   fprintf(stderr, "\n");
-   for (i = 0; i < m.rows; i++)
+
+   if (m1.columns != m2.rows)
    {
-      for (j = 0; j < m.columns; j++)
-         fprintf(stderr, "%g ", m.entry[i][j]);
-
-      fprintf(stderr, "\n");
-   }
-   fprintf(stderr, "\n");
-   return;
-}
-
-matrix read_matrix ()
-{
-   /*creates a matrix and reads from the command line the matrix' entry row by row*/
-   int r, c, i, j;
-
-   fprintf(stderr, "insert number of rows\n");
-   scanf("%d", &r);
-
-   fprintf(stderr, "insert number of columns\n");
-   scanf("%d", &c);
-
-   matrix m = create_matrix(r, c);
-
-   for (i = 0; i < r; i++)
-   {
-      fprintf(stderr, "insert row n %d\n", i + 1);
-
-      for (j = 0; j < c; j++)
-      {
-         scanf("%f", &(m.entry[i][j]));
-      }
+      fprintf (stderr, "Multiplication is not possible\n");
+      exit (1);
    }
 
-   return m;
-}
-
-void store_matrix (FILE* fp, matrix m)
-{
-   /*stores the matrix m in text form*/
-   int i, j;
-   fprintf(fp, "%d %d\n", m.rows, m.columns);
-   for (i = 0; i < m.rows; i++)
-   {
-      for (j = 0; j < m.columns; j++)
-      {
-         fprintf(fp, "%f", m.entry[i][j]);
-      }
-      fputc('\n', fp);
-   }
-   fputc('\n',fp);
-   return;
-}
-
-void store_matrix_bin (FILE* fp, matrix m)
-{
-   /*stores the matrix m in binary file*/
-   int i;
-   fwrite(&(m.rows), sizeof(int), 1, fp);
-   fwrite(&(m.columns), sizeof(int), 1, fp);
-   for (i = 0; i < m.rows; i++)
-   {
-      fwrite(m.entry[i], sizeof(double), m.columns, fp);     
-   }
-   return;
-
-}
-
-void load_matrix (FILE* fp, matrix* m)
-{
-   /*loads entry from the text file fp to the matrix m*/
-   int i, j, r, c;
-   fscanf(fp, "%d %d%*c", &r, &c);
-   if (r != m->rows || c != m->columns)
-   {
-      fprintf(stderr, "loading matrix not possible!\n");
-      return;
-   }
-   
-   for (i = 0; i < m->rows; i++)
-   {
-      for (j = 0; j < m->columns; j++)
-      {
-         fscanf(fp, "%f", &(m->entry[i][j]));
-      }
-      /*deleting \n*/
-      fgetc(fp);
-   }
-   fgetc(fp);
-   return;
-}
-
-matrix load_matrix_bin (FILE* fp)
-{
-   /*creates a matrix and loads entry from the binary file fp to the matrix m*/
-   int i, r, c;
-   fread(&r, sizeof(r), 1, fp);
-   fread(&c, sizeof(c), 1, fp);
-   matrix m = create_matrix(r, c);
-   for (i = 0; i < m.rows; i++)
-   {
-      fread(m.entry[i], sizeof(double), m.columns, fp);     
-   }
-   return m;
-
-}
-
-void randomize_matrix (matrix* m, double lower, double higher)
-{
-   /*replaces all matrix m's entries with a random number in the interval [lower, higher]*/
-   int i, j;
-   srand((unsigned int)clock());
-
-   for (i = 0; i < m->rows; i++)
-   {
-      for (j = 0; j < m->columns; j++)
-      {
-         /*randomization function*/
-         m->entry[i][j] = double_random_number(lower, higher);
-      }
-   }
-   return;
-}
-
-void zero_matrix (matrix* m)
-{
-   /*replaces all m's entries with 0.0*/
-   int i, j;
-   for (i = 0; i < m->rows; i++)
-   {
-      for (j = 0; j < m->columns; j++)
-      {
-         m->entry[i][j] = 0.0;
-      }
-   }
-   return;
-}
-
-/**************  BASIC VECTOR FUNCTIONS  *****************/
-/* CREATE, DELETE, PRINT, READ, LOAD, STORE, RANDOMIZE, ZERO */
-
-vector create_vector (int lenght)
-{
-   /*creates a vector of lenght lenght*/
-   vector v;
-   v.entry = (double*)malloc(sizeof(double)*lenght);
-   v.lenght = lenght;
-   return v;
-}
-
-void delete_vector (vector* v)
-{
-   /*deallocates the memory of v*/
-   free(v->entry);
-   v->lenght = 0;
-   return;
-}
-
-void print_vector (vector v)
-{
-   /*prints the vector v on the terminal*/
-   int i;
-   fprintf(stderr, "\n");
-   for (i = 0; i < v.lenght; i++)
-   {
-      fprintf(stderr, "%g ",v.entry[i]);
-   }
-   fprintf(stderr, "\n");
-   return;
-}
-
-vector read_vector ()
-{
-   /*creates and reads a vector from the terminal*/
-   int l, i;
-   fprintf(stderr, "insert lenght\n");
-   scanf("%d", &l);
-   vector v = create_vector(l);
-
-   fprintf(stderr, "insert entry\n");
-   for (i = 0; i < l; i++)
-      {
-         scanf("%f", &(v.entry[i]));
-      }
-   return v;
-}
-
-void store_vector (FILE* fp, vector v)
-{
-   /*stores the vector v in text file*/
-
-   int i;
-   fprintf(fp, "%d\n", v.lenght);
-   for (i = 0; i < v.lenght; i++)
-   {
-      fprintf(fp, "%f", v.entry[i]);
-   }
-   fputc('\n', fp);
-   return;
-}
-
-void store_vector_bin (FILE* fp, vector v)
-{
-   /*stores the vector v in binary file*/
-   fwrite(&(v.lenght), sizeof(int), 1, fp);
-   fwrite(v.entry, sizeof(double), v.lenght, fp);  
-
-   return;
-
-}
-
-void load_vector (FILE* fp, vector* v)
-{
-   /*loads vector v from text file*/
-
-   int i, l;
-
-   fscanf(fp, "%d%*c", &l);
-
-   if (l != v->lenght)
-   {
-      fprintf(stderr, "loading vector not possible\n");
-      return;
-   }
-
-   for (i = 0; i < v->lenght; i++)
-   {
-      fscanf(fp, "%f", &(v->entry[i]));
-   }
-   fgetc(fp);
-   return;
-}
-
-vector load_vector_bin (FILE* fp)
-{
-   /*creates and read the vector v from binary file*/
-   int l;
-   fread(&l, sizeof(int), 1, fp);
-   vector v = create_vector(l);
-   fread(v.entry, sizeof(double), v.lenght, fp);  
-   return v;
-
-}
-
-void copy_vector (vector sour, vector* dest)
-{
-   /*copies the entries of sour in dest*/
-
-   if (sour.lenght != dest->lenght)
-   {
-      fprintf(stderr, "copying not possible!\n");
-      return;
-   }
-
-   int i;
-
-   for (i = 0; i < sour.lenght; i++)
-   {
-      dest->entry[i] = sour.entry[i];
-   }
-
-}
-
-vector create_copy_vector (vector sour)
-{
-   /*returns a copy of the vector sour*/
-
-   vector dest = create_vector(sour.lenght);
-
-   int i;
-   for (i = 0; i < sour.lenght; i++)
-   {
-      dest.entry[i] = sour.entry[i];
-   }
-   return dest;
-}
-
-void randomize_vector (vector* v, double lower, double higher)
-{
-   /*replaces all vector v's entries with a random number in the interval [lower, higher]*/
-   srand((unsigned int)clock());
-
-   int i;
-   for (i = 0; i < v->lenght; i++)
-   {
-      v->entry[i] = double_random_number(lower, higher);;
-   }
-   return;
-}
-
-void zero_vector (vector* v)
-{
-   /*replaces all vector v's entries with a 0.0*/
-
-   int i;
-   for (i = 0; i < v->lenght; i++)
-   {
-      v->entry[i] = 0.0;
-   }
-   return;
-}
-
-/*********  ALGEBRIC FUNCTIONS  ************/
-
-void vector_sum (vector sour, vector* dest)
-{
-   /*dest += sour */
-   
-   if (sour.lenght != dest->lenght)
-   {
-      fprintf(stderr, "sum not possible\n");
-      return;
-   }
-
-   int i;
-   for (i = 0; i < sour.lenght; i++)
-   {
-      dest->entry[i] += sour.entry[i];
-   }
-   return;
-}
-
-void matrix_sum (matrix sour, matrix* dest)
-{
-   /*dest += sour */
-
-   if(sour.rows != dest->rows || sour.columns != dest->columns)
-   {
-      fprintf(stderr, "sum not possible\n");
-      return;
-   }
-
-   int i, j;
-   for (i = 0; i < sour.rows; i++)
-   {
-      for (j = 0; j < sour.columns; j++)
-      {
-         dest->entry[i][j] += sour.entry[i][j];
-      }
-   }
-   return;
-}
-
-void vector_subtraction (vector sour, vector* dest)
-{
-   /*dest -= sour */
-
-   if(sour.lenght != dest->lenght)
-   {
-      fprintf(stderr, "subtraction not possible\n");
-      return;
-   }
-
-   int i;
-   for (i = 0; i < sour.lenght; i++)
-   {
-      dest->entry[i] -= sour.entry[i];
-   }
-   return;
-}
-
-void matrix_subtraction (matrix sour, matrix* dest)
-{
-   /*dest -= sour */
-
-   if(sour.rows != dest->rows || sour.columns != dest->columns)
-   {
-      fprintf(stderr, "subtraction not possible\n");
-      return;
-   }
-
-   int i, j;
-   for (i = 0; i < sour.rows; i++)
-   {
-      for (j = 0; j < sour.columns; j++)
-      {
-         dest->entry[i][j] -= sour.entry[i][j];
-      }
-   }
-   return;
-}
-
-void vector_function (vector *v, double (*f)(double))
-{
-   /*v = f(v)*/
-
-   int i;
-   for (i = 0; i < v->lenght; i++)
-   {
-      v->entry[i] = f(v->entry[i]);
-   }
-   return;
-}
-
-void matrix_function (matrix *m, double (*f)(double))
-{
-   /*m = f(m)*/
-
-   int i, j;
-   for (i = 0; i < m->rows; i++)
-   {
-      for (j = 0; j < m->columns; j++)
-      {
-         m->entry[i][j] = f(m->entry[i][j]);
-      }
-   }
-   return;
-
-}
-
-void scalar_vector_product (vector* r, double s)
-{
-   /*r *= s*/
-
-   int i;
-   for (i = 0; i < r->lenght; i++)
-   {     
-      r->entry[i] *= s;  
-   }
-   return;
-}
-
-void scalar_matrix_product (matrix* r, double s)
-{
-   /*r *= s*/
-
-   int i, j;
-   for (i = 0; i < r->rows; i++)
-   {
-      for (j = 0; j < r->columns; j++)
-      {
-         r->entry[i][j] *= s;
-      }
-   }
-   return;
-}
-
-double vector_dot_product (vector v1, vector v2)
-{
-   /*returns dot product v1 * v2*/
-
-   if (v1.lenght != v2.lenght)
-   {
-      fprintf(stderr, "dot product not possible");
-      return 0;
-   }
-   
-   int i;
-   double p_sum = 0;
-
-   for (i = 0; i < v1.lenght; i++)
-   {
-      p_sum += v1.entry[i] * v2.entry[i];
-   }
-
-   return p_sum;
-}
-
-void matrix_product (matrix m1, matrix m2, matrix* r)
-{
-   /*rows times columns product r = m1 * m2*/
-
-   if (m1.columns != m2.rows || m2.columns != r->columns || m1.rows != r->rows)
-   {
-      fprintf(stderr, "matrix product not possible");
-      return;
-   }
-
+   Matrix m(m1.rows, m2.columns);
    int i, j, k;
-   double p_sum;
+   double *ptr1, *ptr2, *ptr;
+   double val;
 
-   for (i = 0; i < m1.rows; i++)
+   for (i = 0, ptr = m.data; i < r1; i++, ptr++)
    {
-      for (j = 0; j < m2.columns; j++)
+      for (j = 0; j < c2; j++, ptr++)
       {
-         p_sum = 0;
-         for (k = 0; k < m1.columns; k++)
+         val = 0.0;
+         for (k = 0, ptr1 = m1.data + i * m1.columns, ptr2 = m2.data + j; k < m1.columns; k++, ptr1++, ptr2 += m2.columns)
          {
-            p_sum += m1.entry[i][k] * m2.entry[k][j];
+            val += *ptr1 * *ptr2;
          }
-         r->entry[i][j] = p_sum;
+         *ptr = val;
       }
    }
-   return;
-}
 
-void matrix_vector_product (matrix m, vector v, vector* r)
-{
-   /*product between matrix m and verical vector v*/
-
-   if(v.lenght != m.columns)
-   {
-      fprintf(stderr, "product not possible\n");
-      return;
-   }
-
-   int i, j;
-   double p_sum;
-
-   for (i = 0; i < m.rows; i++)
-   {
-      p_sum = 0;
-      for (j = 0; j < v.lenght; j++)
-      {
-         p_sum += v.entry[j]*m.entry[i][j];
-      }
-      r->entry[i] = p_sum;
-   }
-   return;
-}
-
-void vector_matrix_product (vector v, matrix m, vector* r)
-{
-   /*product between orizontal vector v and matrix m*/
-
-   if(v.lenght != m.rows)
-   {
-      fprintf(stderr, "product not possible\n");
-      return;
-   }
-
-   int i, j;
-   double p_sum;
-
-   for (j = 0; j < m.columns; j++)
-   {
-      p_sum = 0;
-      for (i = 0; i < v.lenght; i++)
-      {
-         p_sum += v.entry[i]*m.entry[i][j];
-      }
-      r->entry[j] = p_sum;
-   }
-   return;
-}
-
-/*********  MISCELLANEOUS FUNCTIONS  ************/
-
-
-int max_position (vector v)
-{
-   /*returns the position of the highest entry of v*/
-
-   int i;
-   int max = 0;
-   for (i = 0; i < v.lenght; i++)
-   {
-      if (v.entry[i] > v.entry[max])
-      {
-         max = i;
-      }
-   }
-   return max;
-}
-
-void vector_inverted_division (vector sour, vector* dest)
-{
-   /*dest = sour / dest*/
-
-   if (sour.lenght != dest->lenght)
-   {
-      fprintf(stderr, "inverted division not possible\n");
-      return;
-   }
-
-   int i;
-   for (i = 0; i < sour.lenght; i++)
-   {
-      dest->entry[i] = sour.entry[i]/dest->entry[i];
-   }
-   return;
-}
-
-double double_random_number (double lower, double higher)
-{
-   /*returns a random double number in the interval [lower, higher]*/
-
-   double r;
-   double span = higher - lower;
-
-   r = ((double)rand()/(double)RAND_MAX) * span;
-
-   return r + lower;   
-}
-
-int int_random_number (int lower, int higher)
-{
-   /*returns a random int number in the interval [lower, higher]*/
-
-   int r = (rand() + lower) % higher;
-   return r;
-}
-
-double standard_deviation (vector v, vector w)
-{
-   vector temp = create_copy_vector(v);
-   int i;
-   double r = 0.0;
-
-   vector_subtraction(w, &temp);
-   vector_function (&temp, square);
-
-   for (i = 0; i < v.lenght; i++)
-   {
-      r += temp.entry[i];
-   }
-
-   return sqrt(r);
-
-}
-
-double square (double n)
-{
-   return n*n;
+   return m;
 }
