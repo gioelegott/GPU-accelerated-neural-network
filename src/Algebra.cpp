@@ -3,6 +3,118 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+Matrix::Matrix (int r, int c) : rows(r), columns(c)
+{
+   if ((data = (double*)malloc(r * c * sizeof(double))) == NULL)
+   {
+      fprintf(stderr, "Memoria non allocata");
+      exit(1);
+   }
+}
+
+Matrix::Matrix (int r, int c, double v) : rows(r), columns(c)
+{
+   if ((data = (double*)calloc(r * c, sizeof(double))) == NULL)
+   {
+      fprintf(stderr, "Memoria non allocata");
+      exit(1);
+   }
+
+   if (v != 0.0)
+   {
+      int i;
+      double* ptr;
+      for (i = 0, ptr = data; i < r * c; i++, ptr++)
+         *ptr = v;
+   }
+}
+
+Matrix::~Matrix ()
+{
+   free(data);
+}
+
+Matrix& Matrix::operator= (const Matrix& m)
+{
+   if (this->rows != m.rows || this->columns != m.columns)
+   {
+      fprintf(stderr, "Assignement not possible\n");
+      exit(1);
+   }
+
+   memcpy(this->data, m.data, m.rows * m.columns * sizeof(double));
+
+   return *this;
+}
+
+Matrix& Matrix::operator+= (const Matrix& m)
+{
+   if (this->rows != m.rows || this->columns != m.columns)
+   {
+      fprintf(stderr, "Assignement not possible\n");
+      exit(1);
+   }
+
+   int i;
+   double *ptr1, *ptr2;
+   for (i = 0, ptr1 = this->data, ptr2 = m.data; i < m.rows * m.columns; i++, ptr1++, ptr2++)
+      *ptr1 += *ptr2;
+   return *this;
+
+}
+
+Matrix& Matrix::operator-= (const Matrix& m)
+{
+   if (this->rows != m.rows || this->columns != m.columns)
+   {
+      fprintf(stderr, "Assignement not possible\n");
+      exit(1);
+   }
+
+   int i;
+   double *ptr1, *ptr2;
+   for (i = 0, ptr1 = this->data, ptr2 = m.data; i < m.rows * m.columns; i++, ptr1++, ptr2++)
+      *ptr1 -= *ptr2;
+
+   return *this;
+}
+
+Matrix& Matrix::operator*= (double v)
+{
+   int i;
+   double* ptr;
+   for (i = 0, ptr = data; i < r * c; i++, ptr++)
+      *ptr *= v;
+   
+   return *this;
+}
+
+Matrix& Matrix::function (double (*f)(double))
+{
+   int i;
+   double* ptr;
+   for (i = 0, ptr = data; i < r * c; i++, ptr++)
+      *ptr = f(*ptr);
+   
+   return *this;
+}
+
+
+   ostream& operator<< (ostream& os, const Matrix& m);
+   friend istream& operator>> (istream& os, const Matrix& m);
+   friend Matrix operator+ (const Matrix& m1, const Matrix& m2);
+   friend Matrix operator- (const Matrix& m1, const Matrix& m2);
+   virtual friend Matrix operator* (const Matrix& m1, const Matrix& m2);
+
+
+   public:
+   Matrix& randomize();
+
+
+
+
+
+
 /**************  BASIC MATRIX FUNCTIONS  *****************/
 /* CREATE, DELETE, PRINT, READ, LOAD, STORE, RANDOMIZE, ZERO */
 
