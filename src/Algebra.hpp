@@ -15,6 +15,8 @@ class Matrix
    Matrix (int r, int c, double v);
    Matrix (FILE* fp);
    ~Matrix ();
+   int Rows() {return rows;};
+   int Columns() {return columns;};
    virtual double* operator[] (int r) { return data + r * columns};
    Matrix& operator= (const Matrix& m);
    Matrix& operator+= (const Matrix& m);
@@ -35,10 +37,13 @@ class Matrix
 
 class Vector : public Matrix
 {
+   friend Vector operator* (const Vector& v1, const Matrix& m2);
+   friend Vector operator* (const Matrix& m1, const Vector& v2);
    friend double operator* (const Vector& v1, const Vector& v2);
 
    public:
    Vector (int d);
    Vector (int d, double v);   
+   int Length() {return columns;};
    double& operator[] (int i) { return *(data + i);};
 }

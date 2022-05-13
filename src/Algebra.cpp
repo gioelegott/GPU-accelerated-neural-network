@@ -121,7 +121,7 @@ Matrix& Matrix::function (double (*f)(double))
    return *this;
 }
 
-void randomize (unsigned seed, double h, double l)
+void Matrix::randomize (unsigned seed, double h, double l)
 {
    int i;
    double* ptr;
@@ -261,9 +261,9 @@ Matrix operator* (const Matrix& m1, const Matrix& m2)
    double *ptr1, *ptr2, *ptr;
    double val;
 
-   for (i = 0, ptr = m.data; i < r1; i++, ptr++)
+   for (i = 0, ptr = m.data; i < m1.rows; i++, ptr++)
    {
-      for (j = 0; j < c2; j++, ptr++)
+      for (j = 0; j < m2.columns; j++, ptr++)
       {
          val = 0.0;
          for (k = 0, ptr1 = m1.data + i * m1.columns, ptr2 = m2.data + j; k < m1.columns; k++, ptr1++, ptr2 += m2.columns)
@@ -275,4 +275,78 @@ Matrix operator* (const Matrix& m1, const Matrix& m2)
    }
 
    return m;
+}
+
+Vector (int d)
+{
+   Matrix (0, d);
+}
+
+Vector (int d, double v)
+{
+   Matrix (0, d, v);
+}   
+
+double operator* (const Vector& v1, const Vector& v2)
+{
+   int i;
+   double *ptr1, *ptr2;
+   double val = 0;
+   for (i = 0, ptr1 = v1.data, ptr2 = v2.data; i < m.rows * m.columns; i++, ptr1++, ptr2++)
+      val += *ptr1 + *ptr2;
+
+   return val;
+}
+
+Vector operator* (const Vector& v1, const Matrix& m2)
+{
+   if (v1.Length() != m2.rows)
+   {
+      fprintf (stderr, "Multiplication is not possible\n");
+      exit (1);
+   }
+
+   Vector v(m2.columns);
+   int i, j, k;
+   double *ptr1, *ptr2, *ptr;
+   double val;
+
+   for (i = 0, ptr = v.data; i < v.Length(); i++, ptr++)
+   {
+         val = 0.0;
+         for (k = 0, ptr1 = v1.data, ptr2 = m2.data; k < v1.Length(); k++, ptr1++, ptr2 += m2.columns)
+         {
+            val += *ptr1 * *ptr2;
+         }
+         *ptr = val;
+   }
+
+   return v;   
+}
+
+
+Vector operator* (const Matrix& m1, const Vector& v2)
+{
+   if (m1.rows != v2.Length())
+   {
+      fprintf (stderr, "Multiplication is not possible\n");
+      exit (1);
+   }
+
+   Vector v(m1.rows);
+   int i, j, k;
+   double *ptr1, *ptr2, *ptr;
+   double val;
+
+   for (i = 0, ptr = v.data; i < v.Length; i++, ptr++)
+   {
+         val = 0.0;
+         for (k = 0, ptr1 = m1.data, ptr2 = v2.data; k < v2.Length(); k++, ptr1++, ptr2++)
+         {
+            val += *ptr1 * *ptr2;
+         }
+         *ptr = val;
+   }
+
+   return v;
 }
