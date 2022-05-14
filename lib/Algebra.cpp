@@ -358,7 +358,7 @@ Vector operator* (const Vector& v1, const Matrix& m2)
    }
 
    Vector v(m2.columns);
-   int i, j, k;
+   int i, k;
    double *ptr1, *ptr2, *ptr;
    double val;
 
@@ -385,7 +385,7 @@ Vector operator* (const Matrix& m1, const Vector& v2)
    }
 
    Vector v(m1.rows);
-   int i, j, k;
+   int i, k;
    double *ptr1, *ptr2, *ptr;
    double val;
 

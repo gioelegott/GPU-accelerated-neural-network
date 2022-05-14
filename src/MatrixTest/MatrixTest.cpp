@@ -4,7 +4,7 @@
 #include <iostream>
 #include <stdlib.h>
 
-double sq (double v) {return v*v;};
+double sq (double v) {return v*v;}; 
 
 int main ()
 {
