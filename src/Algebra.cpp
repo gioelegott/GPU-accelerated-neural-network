@@ -1,13 +1,16 @@
 #include <math.h>
-#include "Algebra.h"
+#include "Algebra.hpp"
 #include <stdio.h>
+#include <iostream>
 #include <stdlib.h>
+#include <string.h>
+
 
 Matrix::Matrix (int r, int c) : rows(r), columns(c)
 {
    if ((data = (double*)malloc(r * c * sizeof(double))) == NULL)
    {
-      fprintf(stderr, "Memoria non allocata");
+      fprintf(stderr, "Memory not allocated\n");
       exit(1);
    }
 }
@@ -16,7 +19,7 @@ Matrix::Matrix (int r, int c, double v) : rows(r), columns(c)
 {
    if ((data = (double*)calloc(r * c, sizeof(double))) == NULL)
    {
-      fprintf(stderr, "Memoria non allocata");
+      fprintf(stderr, "Memory not allocated\n");
       exit(1);
    }
 
@@ -29,24 +32,42 @@ Matrix::Matrix (int r, int c, double v) : rows(r), columns(c)
    }
 }
 
+Matrix::Matrix (const Matrix& m1) : rows(m1.rows), columns(m1.columns)
+{
+   if ((data = (double*)malloc(rows * columns * sizeof(double))) == NULL)
+   {
+      fprintf(stderr, "Memory not allocated\n");
+      exit(1);
+   }
+   memcpy(this->data, m1.data, m1.rows * m1.columns * sizeof(double));
+}
+
+
 Matrix::Matrix (FILE* fp)
 {
-   if (fwrite (&(this->rows), sizeof(int), 1, fp) == 0)
+   if (fread (&(this->rows), sizeof(int), 1, fp) == 0)
    {
-      fprintf(stderr, "Error in loading matrix\n");
+      fprintf(stderr, "Error1 in loading matrix\n");
       exit(1);
    }
 
-   if (fwrite (&(this->columns), sizeof(int), 1, fp) == 0)
+   if (fread (&(this->columns), sizeof(int), 1, fp) == 0)
    {
-      fprintf(stderr, "Error in loading matrix\n");
+      fprintf(stderr, "Error2 in loading matrix\n");
       exit(1);
    }
 
    int dim = this->rows * this->columns;
-   if (fwrite(this->data, sizeof(double), dim, fp) != dim)
+
+   if ((data = (double*)malloc(dim * sizeof(double))) == NULL)
    {
-      fprintf(stderr, "Error in loading matrix\n");
+      fprintf(stderr, "Memory not allocated\n");
+      exit(1);
+   }
+
+   if (fread(this->data, sizeof(double), dim, fp) != dim)
+   {
+      fprintf(stderr, "Error3 in loading matrix\n");
       exit(1);
    }
 }
@@ -105,7 +126,7 @@ Matrix& Matrix::operator*= (double v)
 {
    int i;
    double* ptr;
-   for (i = 0, ptr = data; i < r * c; i++, ptr++)
+   for (i = 0, ptr = data; i < this->rows * this->columns; i++, ptr++)
       *ptr *= v;
    
    return *this;
@@ -115,24 +136,49 @@ Matrix& Matrix::function (double (*f)(double))
 {
    int i;
    double* ptr;
-   for (i = 0, ptr = data; i < r * c; i++, ptr++)
+   for (i = 0, ptr = data; i < this->rows * this->columns; i++, ptr++)
       *ptr = f(*ptr);
    
    return *this;
 }
 
-void Matrix::randomize (unsigned seed, double h, double l)
+Matrix& Matrix::randomize (unsigned seed, double h, double l)
 {
    int i;
    double* ptr;
    double s = h - l;
    srand(seed);
-   for (i = 0, ptr = data; i < r * c; i++, ptr++)
-      *ptr = ((double)rand()/(double)RAND_MAX) * span + l;
+   for (i = 0, ptr = data; i < this->rows * this->columns; i++, ptr++)
+      *ptr = ((double)rand()/(double)RAND_MAX) * s + l;
+
+   return *this;
 
 }
 
-int Matrix::store (FILE* fp)
+Matrix& Matrix::identity ()
+{
+   if (this->rows != this->columns)
+   {
+      fprintf(stderr, "Identity matrix must be square\n");
+   }
+
+   int i, j = 0;
+   double* ptr;
+   for (i = 0, ptr = data; i < this->rows * this->columns; i++, ptr++)
+   {
+      if (i == j * this->columns + j)
+      {
+         *ptr = 1;
+         j++;
+      }
+      else
+         *ptr = 0;
+   }
+   return *this;
+
+}
+
+int Matrix::store (FILE* fp) const
 {
    /*Stores the matrix into a binary file.
      Returns 1 if load was successful 0 if not*/
@@ -142,21 +188,22 @@ int Matrix::store (FILE* fp)
 
    if (fwrite (&(this->rows), sizeof(int), 1, fp) == 0)
    {
-      fprintf(stderr, "Error in loading matrix\n");
+      fprintf(stderr, "Error in storing matrix\n");
       return 0;
    }
 
    if (fwrite (&(this->columns), sizeof(int), 1, fp) == 0)
    {
-      fprintf(stderr, "Error in loading matrix\n");
+      fprintf(stderr, "Error in storing matrix\n");
       return 0;
    }
 
    if (fwrite(this->data, sizeof(double), r * c, fp) != r * c)
    {
-      fprintf(stderr, "Error in loading matrix\n");
+      fprintf(stderr, "Error in storing matrix\n");
       return 0;
    }
+
 
    return 1;
 
@@ -170,7 +217,7 @@ int Matrix::load (FILE* fp)
 
    int r, c;
 
-   if (fread (&r), sizeof(int), 1, fp) == 0)
+   if (fread (&r, sizeof(int), 1, fp) == 0)
    {
       fprintf(stderr, "Error in loading matrix\n");
       return 0;
@@ -197,15 +244,17 @@ int Matrix::load (FILE* fp)
    return 1;
 }
 
-ostream& operator<< (ostream& os, const Matrix& m)
+std::ostream& operator<< (std::ostream& os, const Matrix& m)
 {
    int i, j;
-   for (i = 0, ptr = data; i < r; i++, ptr++)
+   double *ptr;
+   for (i = 0, ptr = m.data; i < m.rows; i++)
    {
-      for (j = 0; j < c; j++, ptr++)
+      for (j = 0; j < m.columns; j++, ptr++)
          os << *ptr << ' ';
-      os << endl;
+      os << std::endl;
    }
+   return os;
 }
 
 
@@ -261,7 +310,7 @@ Matrix operator* (const Matrix& m1, const Matrix& m2)
    double *ptr1, *ptr2, *ptr;
    double val;
 
-   for (i = 0, ptr = m.data; i < m1.rows; i++, ptr++)
+   for (i = 0, ptr = m.data; i < m1.rows; i++)
    {
       for (j = 0; j < m2.columns; j++, ptr++)
       {
@@ -277,22 +326,24 @@ Matrix operator* (const Matrix& m1, const Matrix& m2)
    return m;
 }
 
-Vector (int d)
-{
-   Matrix (0, d);
-}
+Vector::Vector (int d) : Matrix (0, d)
+{}
 
-Vector (int d, double v)
-{
-   Matrix (0, d, v);
-}   
+Vector::Vector (int d, double v) : Matrix (0, d, v)
+{}   
 
 double operator* (const Vector& v1, const Vector& v2)
 {
+   if (v1.Length() != v2.Length())
+   {
+      fprintf (stderr, "Multiplication is not possible\n");
+      exit (1);
+   }
+
    int i;
    double *ptr1, *ptr2;
    double val = 0;
-   for (i = 0, ptr1 = v1.data, ptr2 = v2.data; i < m.rows * m.columns; i++, ptr1++, ptr2++)
+   for (i = 0, ptr1 = v1.data, ptr2 = v2.data; i < v1.Length(); i++, ptr1++, ptr2++)
       val += *ptr1 + *ptr2;
 
    return val;
@@ -338,7 +389,7 @@ Vector operator* (const Matrix& m1, const Vector& v2)
    double *ptr1, *ptr2, *ptr;
    double val;
 
-   for (i = 0, ptr = v.data; i < v.Length; i++, ptr++)
+   for (i = 0, ptr = v.data; i < v.Length(); i++, ptr++)
    {
          val = 0.0;
          for (k = 0, ptr1 = m1.data, ptr2 = v2.data; k < v2.Length(); k++, ptr1++, ptr2++)
