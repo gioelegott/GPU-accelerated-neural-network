@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-
+/*MATRIX METHODS*/
 Matrix::Matrix (int r, int c) : rows(r), columns(c)
 {
    if ((data = (double*)malloc(r * c * sizeof(double))) == NULL)
@@ -132,17 +132,17 @@ Matrix& Matrix::operator*= (double v)
    return *this;
 }
 
-Matrix& Matrix::function (double (*f)(double))
+void Matrix::function (double (*f)(double))
 {
    int i;
    double* ptr;
    for (i = 0, ptr = data; i < this->rows * this->columns; i++, ptr++)
       *ptr = f(*ptr);
    
-   return *this;
+   return;
 }
 
-Matrix& Matrix::randomize (unsigned seed, double h, double l)
+void Matrix::randomize (unsigned seed, double h, double l)
 {
    int i;
    double* ptr;
@@ -151,11 +151,11 @@ Matrix& Matrix::randomize (unsigned seed, double h, double l)
    for (i = 0, ptr = data; i < this->rows * this->columns; i++, ptr++)
       *ptr = ((double)rand()/(double)RAND_MAX) * s + l;
 
-   return *this;
+   return;
 
 }
 
-Matrix& Matrix::identity ()
+void Matrix::identity ()
 {
    if (this->rows != this->columns)
    {
@@ -174,7 +174,7 @@ Matrix& Matrix::identity ()
       else
          *ptr = 0;
    }
-   return *this;
+   return;
 
 }
 
@@ -212,7 +212,7 @@ int Matrix::store (FILE* fp) const
 
 int Matrix::load (FILE* fp)
 {
-   /*Loads the matrix into a binary file.
+   /*Loads the matrix from a binary file.
      Returns 1 if load was successful 0 if not*/
 
    int r, c;
@@ -248,12 +248,15 @@ std::ostream& operator<< (std::ostream& os, const Matrix& m)
 {
    int i, j;
    double *ptr;
-   for (i = 0, ptr = m.data; i < m.rows; i++)
+   for (i = 0, ptr = m.data; i < m.rows-1; i++)
    {
       for (j = 0; j < m.columns; j++, ptr++)
          os << *ptr << ' ';
       os << std::endl;
    }
+
+   for (j = 0; j < m.columns; j++, ptr++)
+      os << *ptr << ' ';
    return os;
 }
 
@@ -264,7 +267,7 @@ Matrix operator+ (const Matrix& m1, const Matrix& m2)
    int c = m1.columns;
    if (r != m2.rows || c != m2.columns)
    {
-      fprintf (stderr, "Sum is not possible between matreces with different dimensions\n");
+      fprintf (stderr, "Sum is not possible between matrices with different dimensions\n");
       exit (1);
    }
 
@@ -283,7 +286,7 @@ Matrix operator- (const Matrix& m1, const Matrix& m2)
    int c = m1.columns;
    if (r != m2.rows || c != m2.columns)
    {
-      fprintf (stderr, "Subtraction is not possible between matreces with different dimensions\n");
+      fprintf (stderr, "Subtraction is not possible between matrices with different dimensions\n");
       exit (1);
    }
 
@@ -326,11 +329,150 @@ Matrix operator* (const Matrix& m1, const Matrix& m2)
    return m;
 }
 
-Vector::Vector (int d) : Matrix (0, d)
+/*VECTOR METHODS*/
+
+Vector::Vector (int d) : Matrix (1, d)
 {}
 
-Vector::Vector (int d, double v) : Matrix (0, d, v)
+Vector::Vector (int d, double v) : Matrix (1, d, v)
 {}   
+
+Vector::Vector (FILE* fp) : Matrix (fp)
+{}
+
+Vector& Vector::operator= (const Vector& v)
+{
+   if (this->Length() != v.Length())
+   {
+      fprintf(stderr, "Assignement not possible\n");
+      exit(1);
+   }
+
+   memcpy(this->data, v.data, v.Length() * sizeof(double));
+
+   return *this;
+}
+
+Vector& Vector::operator+= (const Vector& v)
+{
+   if (this->Length() != v.Length())
+   {
+      fprintf(stderr, "Assignement not possible\n");
+      exit(1);
+   }
+
+   int i;
+   double *ptr1, *ptr2;
+   for (i = 0, ptr1 = this->data, ptr2 = v.data; i < v.Length(); i++, ptr1++, ptr2++)
+      *ptr1 += *ptr2;
+   return *this;
+
+}
+
+Vector& Vector::operator-= (const Vector& v)
+{
+   if (this->Length() != v.Length())
+   {
+      fprintf(stderr, "Assignement not possible\n");
+      exit(1);
+   }
+
+   int i;
+   double *ptr1, *ptr2;
+   for (i = 0, ptr1 = this->data, ptr2 = v.data; i < v.Length(); i++, ptr1++, ptr2++)
+      *ptr1 -= *ptr2;
+   return *this;
+}
+
+Vector& Vector::operator*= (double v)
+{
+   int i;
+   double* ptr;
+   for (i = 0, ptr = data; i < this->Length(); i++, ptr++)
+      *ptr *= v;
+   
+   return *this;
+}
+
+int Vector::load (FILE* fp)
+{
+   /*Loads the vector from a binary file.
+     Returns 1 if load was successful 0 if not*/
+
+   int r, c;
+
+   if (fread (&r, sizeof(int), 1, fp) == 0)
+   {
+      fprintf(stderr, "Error in loading vector\n");
+      return 0;
+   }
+
+   if (fread (&c, sizeof(int), 1, fp) == 0)
+   {
+      fprintf(stderr, "Error in loading vector\n");
+      return 0;
+   }
+
+   if (r != 1 || c != this->Length())
+   {
+      fprintf(stderr, "Vector dimension does not correspond\n");
+      return 0;
+   }
+
+   if (fread(this->data, sizeof(double), c, fp) != c)
+   {
+      fprintf(stderr, "Error in loading vector\n");
+      return 0;
+   }
+
+   return 1;
+}
+
+std::ostream& operator<< (std::ostream& os, const Vector& v)
+{
+   int i;
+   double *ptr;
+   for (i = 0, ptr = v.data; i < v.Length(); i++, ptr++)
+   {
+      os << *ptr << ' ';
+   }
+   return os;
+}
+
+Vector operator+ (const Vector& v1, const Vector& v2)
+{
+
+   if (v1.Length() != v2.Length())
+   {
+      fprintf (stderr, "Sum is not possible between vectors with different length\n");
+      exit (1);
+   }
+
+   Vector v(v1.Length());
+   int i;
+   double *ptr1, *ptr2, *ptr;
+   for (i = 0, ptr1 = v1.data, ptr2 = v2.data, ptr = v.data; i < v1.Length(); i++, ptr1++, ptr2++, ptr++)
+      *ptr = *ptr1 + *ptr2;
+
+   return v;
+}
+
+Vector operator- (const Vector& v1, const Vector& v2)
+{
+   if (v1.Length() != v2.Length())
+   {
+      fprintf (stderr, "Sum is not possible between vectors with different length\n");
+      exit (1);
+   }
+
+   Vector v(v1.Length());
+   int i;
+   double *ptr1, *ptr2, *ptr;
+   for (i = 0, ptr1 = v1.data, ptr2 = v2.data, ptr = v.data; i < v1.Length(); i++, ptr1++, ptr2++, ptr++)
+      *ptr = *ptr1 - *ptr2;
+
+   return v; 
+}
 
 double operator* (const Vector& v1, const Vector& v2)
 {
@@ -371,7 +513,6 @@ Vector operator* (const Vector& v1, const Matrix& m2)
          }
          *ptr = val;
    }
-
    return v;   
 }
 

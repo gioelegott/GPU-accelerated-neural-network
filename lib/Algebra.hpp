@@ -29,11 +29,10 @@ class Matrix
    Matrix& operator= (const Matrix& m);
    Matrix& operator+= (const Matrix& m);
    Matrix& operator-= (const Matrix& m);
-   Matrix& operator*= (double v);
-   
-   Matrix& function (double (*f)(double));
-   Matrix& randomize (unsigned seed, double h, double l);
-   Matrix& identity ();
+   Matrix& operator*= (double v);   
+   void function (double (*f)(double));
+   void randomize (unsigned seed, double h, double l);
+   void identity ();
    int load (FILE* fp);
    int store (FILE* fp) const;
 
@@ -46,13 +45,22 @@ class Matrix
 
 class Vector : public Matrix
 {
+   friend std::ostream& operator<< (std::ostream& os, const Vector& m);
+   friend Vector operator+ (const Vector& m1, const Vector& m2);
+   friend Vector operator- (const Vector& m1, const Vector& m2);
    friend Vector operator* (const Vector& v1, const Matrix& m2);
    friend Vector operator* (const Matrix& m1, const Vector& v2);
    friend double operator* (const Vector& v1, const Vector& v2);
 
    public:
    Vector (int d);
-   Vector (int d, double v);   
+   Vector (int d, double v);
+   Vector (FILE* fp);
    int Length() const {return columns;};
    double& operator[] (int i) { return *(data + i);};
+   Vector& operator= (const Vector& v);
+   Vector& operator+= (const Vector& m);
+   Vector& operator-= (const Vector& m);
+   Vector& operator*= (double v);   
+   int load (FILE* fp);
 };
